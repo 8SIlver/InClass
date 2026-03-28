@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InClass – Asistencia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.383.0/umd/lucide.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #07080d;
+      --surface:    #0f1017;
+      --surface2:   #181921;
+      --border:     #21232e;
+      --border2:    #2d3044;
+      --accent:     #4f8eff;
+      --accent-dim: rgba(79,142,255,.12);
+      --gold:       #f5c842;
+      --gold-dim:   rgba(245,200,66,.12);
+      --success:    #2dd4a0;
+      --danger:     #ff5f5f;
+      --warning:    #fbbf24;
+      --text:       #eceef8;
+      --muted:      #5a6080;
+      --radius:     16px;
+      --radius-sm:  10px;
+      --shadow:     0 12px 40px rgba(0,0,0,.6);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(79,142,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(79,142,255,.025) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none; z-index: 0;
+    }
+
+    .app {
+      position: relative; z-index: 1;
+      max-width: 720px; margin: 0 auto;
+      padding: 28px 16px 80px;
+    }
+
+    .screen { display: none; }
+    .screen.active { display: block; animation: fadeUp .4s cubic-bezier(.22,1,.36,1) both; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* BRAND */
+    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 40px; }
+    .brand-mark {
+      width: 42px; height: 42px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      display: flex; align-items: center; justify-content: center; font-size: 20px;
+      box-shadow: 0 0 28px rgba(79,142,255,.35);
+    }
+    .brand-name {
+      font-size: 22px; font-weight: 800;
+      background: linear-gradient(135deg, var(--text) 50%, var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+
+    /* ROLE SELECTOR */
+    .role-heading { text-align: center; margin-bottom: 48px; }
+    .role-heading h1 {
+      font-size: clamp(26px,5vw,36px); font-weight: 800; margin-bottom: 10px;
+      background: linear-gradient(135deg, var(--text), var(--muted));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .role-heading p { color: var(--muted); font-size: 15px; }
+
+    .role-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px; }
+
+    .role-card {
+      position: relative; background: var(--surface);
+      border: 1.5px solid var(--border); border-radius: 20px;
+      padding: 36px 20px 28px; text-align: center; cursor: pointer;
+      transition: all .25s cubic-bezier(.22,1,.36,1); overflow: hidden;
+    }
+    .role-card::before {
+      content: ''; position: absolute; inset: 0; opacity: 0;
+      transition: opacity .3s; border-radius: 20px;
+    }
+    .role-card.teacher::before { background: radial-gradient(circle at 50% 0%, var(--gold-dim), transparent 70%); }
+    .role-card.student::before { background: radial-gradient(circle at 50% 0%, var(--accent-dim), transparent 70%); }
+    .role-card:hover { transform: translateY(-4px); border-color: var(--border2); }
+    .role-card:hover::before { opacity: 1; }
+    .role-card.teacher:hover { border-color: rgba(245,200,66,.4); box-shadow: 0 16px 40px rgba(245,200,66,.1); }
+    .role-card.student:hover { border-color: rgba(79,142,255,.4); box-shadow: 0 16px 40px rgba(79,142,255,.1); }
+
+    .role-icon { font-size: 52px; margin-bottom: 16px; display: block; filter: drop-shadow(0 4px 12px rgba(0,0,0,.4)); }
+    .role-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .role-card.teacher .role-title { color: var(--gold); }
+    .role-card.student .role-title { color: var(--accent); }
+    .role-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+    .role-lock {
+      display: inline-flex; align-items: center; gap: 5px; margin-top: 14px;
+      font-size: 11px; font-weight: 600; color: var(--gold); background: var(--gold-dim);
+      border: 1px solid rgba(245,200,66,.2); padding: 4px 10px; border-radius: 999px;
+      text-transform: uppercase; letter-spacing: .05em;
+    }
+
+    /* PIN MODAL */
+    .pin-overlay {
+      display: none; position: fixed; inset: 0; z-index: 100;
+      background: rgba(7,8,13,.85); backdrop-filter: blur(8px);
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .pin-overlay.show { display: flex; animation: fadeUp .3s ease; }
+    .pin-modal {
+      background: var(--surface); border: 1.5px solid var(--border2);
+      border-radius: 24px; padding: 40px 32px;
+      width: 100%; max-width: 360px; text-align: center; box-shadow: var(--shadow);
+    }
+    .pin-icon { font-size: 44px; margin-bottom: 16px; }
+    .pin-modal h2 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+    .pin-modal p { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+
+    .pin-dots { display: flex; justify-content: center; gap: 14px; margin-bottom: 28px; }
+    .pin-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--border2); transition: all .2s; }
+    .pin-dot.filled { background: var(--gold); box-shadow: 0 0 10px rgba(245,200,66,.5); }
+
+    .pin-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+    .pin-key {
+      background: var(--surface2); border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm); padding: 18px 10px;
+      font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 600;
+      color: var(--text); cursor: pointer; transition: all .15s;
+    }
+    .pin-key:hover { background: var(--border2); transform: scale(1.04); }
+    .pin-key:active { transform: scale(.97); }
+    .pin-key.del { font-size: 16px; color: var(--muted); }
+    .pin-key.zero { grid-column: 2; }
+
+    .pin-error {
+      color: var(--danger); font-size: 13px; font-weight: 500;
+      min-height: 20px; margin-bottom: 12px;
+    }
+    .pin-error.shake { animation: shake .3s ease; }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+
+    .pin-cancel {
+      color: var(--muted); font-size: 13px; cursor: pointer;
+      background: none; border: none; font-family: inherit;
+      padding: 8px 16px; border-radius: 8px; transition: color .2s;
+    }
+    .pin-cancel:hover { color: var(--text); }
+
+    /* NAV */
+    .nav {
+      display: flex; gap: 6px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 6px; margin-bottom: 28px;
+    }
+    .nav-btn {
+      flex: 1; padding: 10px 6px; border: none; border-radius: var(--radius-sm);
+      background: transparent; color: var(--muted);
+      font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: all .2s; text-align: center; line-height: 1.3;
+    }
+    .nav-btn:hover { background: var(--surface2); color: var(--text); }
+    .nav-btn.active {
+      background: linear-gradient(135deg, var(--accent), #7c6fff);
+      color: #fff; box-shadow: 0 4px 16px rgba(79,142,255,.3);
+    }
+
+    /* CARD */
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 26px; margin-bottom: 16px; box-shadow: var(--shadow);
+    }
+
+    /* TYPOGRAPHY */
+    .page-title {
+      font-size: clamp(22px,4vw,28px); font-weight: 800; margin-bottom: 6px;
+      background: linear-gradient(135deg, var(--text) 60%, var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .page-sub { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+    h2 { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+    h3 { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 14px; }
+
+    /* FORMS */
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 7px; text-transform: uppercase; letter-spacing: .07em; }
+    input[type="text"], input[type="number"], input[type="date"] {
+      width: 100%; padding: 13px 16px; background: var(--surface2);
+      border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+      color: var(--text); font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 500;
+      transition: border-color .2s, box-shadow .2s; outline: none;
+    }
+    input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,142,255,.15); }
+    input::placeholder { color: var(--muted); font-weight: 400; }
+    input:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* BUTTONS */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 13px 22px; border: none; border-radius: var(--radius-sm);
+      font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 700;
+      cursor: pointer; transition: all .2s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #7c6fff);
+      color: #fff; width: 100%; box-shadow: 0 6px 20px rgba(79,142,255,.3);
+    }
+    .btn-primary:hover { opacity: .9; transform: translateY(-1px); }
+    .btn-danger { background: rgba(255,95,95,.12); color: var(--danger); border: 1.5px solid rgba(255,95,95,.25); }
+    .btn-danger:hover { background: rgba(255,95,95,.22); }
+    .btn-success { background: rgba(45,212,160,.12); color: var(--success); border: 1.5px solid rgba(45,212,160,.25); }
+    .btn-success:hover { background: rgba(45,212,160,.22); }
+    .btn-outline { background: transparent; color: var(--muted); border: 1.5px solid var(--border); }
+    .btn-outline:hover { background: var(--surface2); color: var(--text); }
+    .btn-sm { padding: 10px 16px; font-size: 13px; }
+    .btn-row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn-row .btn { flex: 1; min-width: 120px; }
+
+    /* ALERTS */
+    .alert { padding: 13px 16px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; margin-bottom: 16px; display: none; align-items: flex-start; gap: 10px; }
+    .alert.show { display: flex; animation: fadeUp .2s ease; }
+    .alert-success { background: rgba(45,212,160,.1); border: 1px solid rgba(45,212,160,.25); color: var(--success); }
+    .alert-error   { background: rgba(255,95,95,.1);  border: 1px solid rgba(255,95,95,.25);  color: var(--danger); }
+    .alert-warning { background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.25); color: var(--warning); }
+
+    /* CODE DISPLAY */
+    .code-display {
+      text-align: center; padding: 36px 20px;
+      background: linear-gradient(135deg, rgba(79,142,255,.07), rgba(124,111,255,.07));
+      border: 1.5px solid rgba(79,142,255,.2); border-radius: var(--radius); margin-bottom: 16px;
+    }
+    .code-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--accent); margin-bottom: 10px; }
+    .code-number {
+      font-family: 'DM Mono', monospace; font-size: clamp(52px,13vw,90px); font-weight: 500;
+      letter-spacing: .25em;
+      background: linear-gradient(135deg, #fff 40%, var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      line-height: 1;
+    }
+    .code-course { margin-top: 14px; font-size: 16px; font-weight: 500; color: var(--muted); }
+
+    /* COUNTDOWN */
+    .countdown-wrap { text-align: center; margin-bottom: 16px; }
+    .countdown-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin-bottom: 6px; }
+    .countdown-val {
+      font-family: 'DM Mono', monospace; font-size: clamp(32px,7vw,48px); font-weight: 500;
+      color: var(--accent); font-variant-numeric: tabular-nums; transition: color .3s;
+    }
+    .countdown-val.urgent { color: var(--danger); animation: blink 1s ease infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    /* PROGRESS */
+    .progress-wrap { margin-bottom: 8px; }
+    .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .progress-header .lbl { font-size: 13px; color: var(--muted); font-weight: 500; }
+    .progress-header .cnt { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .progress-track { height: 10px; background: var(--surface2); border-radius: 999px; overflow: hidden; border: 1px solid var(--border); }
+    .progress-fill {
+      height: 100%; border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), #7c6fff);
+      transition: width .6s cubic-bezier(.4,0,.2,1), background .4s;
+    }
+    .progress-fill.full { background: linear-gradient(90deg, var(--success), #4ade80); box-shadow: 0 0 14px rgba(45,212,160,.4); }
+    .progress-pct { text-align: right; font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+    /* STATS */
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+    .stat-card { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 18px 12px; text-align: center; }
+    .stat-val { font-size: clamp(24px,5vw,32px); font-weight: 800; color: var(--accent); margin-bottom: 4px; font-variant-numeric: tabular-nums; }
+    .stat-lbl { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+
+    /* STUDENT LIST */
+    .student-list { list-style: none; display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; padding-right: 4px; }
+    .student-list::-webkit-scrollbar { width: 4px; }
+    .student-list::-webkit-scrollbar-track { background: var(--surface2); border-radius: 4px; }
+    .student-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+    .student-item { display: flex; align-items: center; gap: 10px; padding: 11px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; animation: slideIn .25s ease; }
+    @keyframes slideIn { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
+    .s-num { font-size: 12px; color: var(--muted); min-width: 24px; font-weight: 600; }
+    .s-carnet { font-weight: 600; flex: 1; font-family: 'DM Mono', monospace; font-size: 13px; }
+    .s-badge { font-size: 11px; padding: 3px 10px; border-radius: 999px; background: rgba(45,212,160,.15); color: var(--success); font-weight: 700; }
+
+    /* EMPTY / CLOSED */
+    .empty { text-align: center; padding: 32px 16px; color: var(--muted); font-size: 14px; }
+    .empty .ico { font-size: 32px; margin-bottom: 8px; }
+    .closed { text-align: center; padding: 44px 16px; }
+    .closed .ico { font-size: 52px; margin-bottom: 16px; }
+    .closed h2 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .closed p { color: var(--muted); font-size: 14px; max-width: 320px; margin: 0 auto; }
+
+    /* REPORT */
+    .report-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+    .meta-item { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; }
+    .meta-key { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: 5px; font-weight: 600; }
+    .meta-val { font-size: 18px; font-weight: 700; }
+    .divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+    /* BACK BTN */
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: var(--muted); font-size: 13px; font-weight: 600;
+      background: none; border: none; cursor: pointer; font-family: 'Outfit', sans-serif;
+      padding: 6px 0; margin-bottom: 24px; transition: color .2s;
+    }
+    .back-btn:hover { color: var(--text); }
+
+    /* SUCCESS */
+    .success-card {
+      text-align: center; padding: 36px 20px;
+      background: rgba(45,212,160,.07); border: 1.5px solid rgba(45,212,160,.2);
+      border-radius: var(--radius); margin-bottom: 16px;
+    }
+    .success-card .ico { font-size: 48px; margin-bottom: 12px; }
+    .success-card h2 { font-size: 20px; color: var(--success); margin-bottom: 6px; }
+    .success-card p { color: var(--muted); font-size: 14px; }
+
+    @media (max-width: 480px) {
+      .role-cards { gap: 12px; }
+      .role-card { padding: 28px 14px 22px; }
+      .role-icon { font-size: 40px; }
+      .card { padding: 18px; }
+      .report-meta { grid-template-columns: 1fr; }
+      .btn-row { flex-direction: column; }
+      .pin-modal { padding: 32px 20px; }
+    }
+
+    html { scrollbar-width: thin; scrollbar-color: var(--border) var(--surface); }
+
+    /* LUCIDE ICONS */
+    .icon { display: inline-flex; align-items: center; justify-content: center; }
+    .icon svg { width: 1em; height: 1em; stroke: currentColor; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .role-icon { display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+    .role-icon svg { width: 52px; height: 52px; }
+    @media (max-width: 480px) { .role-icon svg { width: 40px; height: 40px; } }
+    .pin-icon { display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+    .pin-icon svg { width: 44px; height: 44px; }
+    .brand-mark svg { width: 22px; height: 22px; stroke: #fff; fill: none; }
+    .closed .ico svg { width: 52px; height: 52px; }
+    .empty .ico svg { width: 32px; height: 32px; }
+    .success-card .ico svg { width: 48px; height: 48px; }
+    .report-header-ico svg { width: 48px; height: 48px; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ══════ PANTALLA 0 – ROL ══════ -->
+  <div id="screen-role" class="screen active">
+    <div class="brand">
+      <div class="brand-mark"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></div>
+      <span class="brand-name">InClass</span>
+    </div>
+    <div class="role-heading">
+      <h1>¿Quién eres?</h1>
+      <p>Selecciona tu rol para continuar</p>
+    </div>
+    <div class="role-cards">
+      <div class="role-card teacher" onclick="openPinModal()">
+        <span class="role-icon" style="color:var(--gold)"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M9 9h1m5 0h1M9 13h6"/></svg></span>
+        <div class="role-title">Profesor</div>
+        <p class="role-desc">Crea y gestiona sesiones de asistencia</p>
+        <div class="role-lock"><span class="icon" style="width:11px;height:11px;display:inline-flex"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></span> PIN requerido</div>
+      </div>
+      <div class="role-card student" onclick="enterAsStudent()">
+        <span class="role-icon" style="color:var(--accent)"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></span>
+        <div class="role-title">Alumno</div>
+        <p class="role-desc">Marca tu asistencia con el código de clase</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ PANTALLA 1 – ALUMNO ══════ -->
+  <div id="screen-student" class="screen">
+    <button class="back-btn" onclick="goHome()"><span class="icon"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></span> Volver</button>
+    <h1 class="page-title">Marcar Asistencia</h1>
+    <p class="page-sub">Ingresa el código de sesión y tu Código SIS.</p>
+
+    <div class="card">
+      <div id="student-blocked" style="display:none">
+        <div class="closed">
+          <div class="ico" id="blocked-icon" style="color:var(--muted)"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+          <h2 id="blocked-title">Sesión no disponible</h2>
+          <p id="blocked-desc">No hay ninguna sesión activa en este momento.</p>
+        </div>
+      </div>
+
+      <div id="student-form">
+        <div class="form-group">
+          <label for="s-code">Código de sesión</label>
+          <input type="text" id="s-code" placeholder="6 dígitos" maxlength="6" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')" />
+        </div>
+        <div class="form-group">
+          <label for="s-carnet">Código SIS</label>
+          <input type="text" id="s-carnet" placeholder="Ej. 20230012" maxlength="20" />
+        </div>
+        <div id="student-alert" class="alert"></div>
+        <button class="btn btn-primary" onclick="markAttendance()"><span class="icon"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span> Registrar asistencia</button>
+      </div>
+
+      <div id="student-success" style="display:none">
+        <div class="success-card">
+          <div class="ico" style="color:var(--success)"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+          <h2>¡Asistencia registrada!</h2>
+          <p id="success-carnet">Código SIS registrado correctamente</p>
+        </div>
+        <button class="btn btn-outline" style="width:100%" onclick="resetStudentForm()"><span class="icon"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></span> Registrar otro alumno</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ PANTALLA 2 – PROFESOR ══════ -->
+  <div id="screen-teacher" class="screen">
+    <button class="back-btn" onclick="goHome()"><span class="icon"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></span> Cerrar modo profesor</button>
+
+    <nav class="nav">
+      <button class="nav-btn active" id="nav-create" onclick="switchTab('create')"><span class="icon"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg></span> Crear sesión</button>
+      <button class="nav-btn"        id="nav-panel"  onclick="switchTab('panel')"><span class="icon"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span> Panel en vivo</button>
+      <button class="nav-btn"        id="nav-report" onclick="switchTab('report')"><span class="icon"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span> Reporte</button>
+    </nav>
+
+    <!-- TAB CREAR -->
+    <div id="tab-create">
+      <div id="create-form-section">
+        <h1 class="page-title">Crear Sesión</h1>
+        <p class="page-sub">Configura los parámetros de tu clase.</p>
+        <div class="card">
+          <div class="form-group">
+            <label for="t-course">Nombre del curso</label>
+            <input type="text" id="t-course" placeholder="Ej. Matemáticas Discretas" maxlength="60" />
+          </div>
+          <div class="form-group">
+            <label for="t-date">Fecha</label>
+            <input type="date" id="t-date" />
+          </div>
+          <div class="form-group">
+            <label for="t-max">Cantidad máxima de alumnos</label>
+            <input type="number" id="t-max" placeholder="Ej. 40" min="1" max="500" />
+          </div>
+          <div class="form-group">
+            <label for="t-time">Tiempo límite de registro (minutos)</label>
+            <input type="number" id="t-time" placeholder="Ej. 10" min="1" max="120" />
+          </div>
+          <div id="teacher-alert" class="alert"></div>
+          <button class="btn btn-primary" onclick="createSession()"><span class="icon"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg></span> Iniciar sesión</button>
+        </div>
+      </div>
+
+      <div id="create-code-section" style="display:none">
+        <h1 class="page-title">Sesión Activa</h1>
+        <p class="page-sub">Proyecta este código para que los alumnos lo vean.</p>
+        <div class="code-display">
+          <p class="code-label">Código de sesión</p>
+          <div class="code-number" id="teacher-code">——</div>
+          <p class="code-course" id="teacher-course"></p>
+        </div>
+        <div class="card">
+          <div class="countdown-wrap">
+            <p class="countdown-label">Tiempo restante</p>
+            <div class="countdown-val" id="teacher-countdown">--:--</div>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-outline btn-sm" style="flex:1" onclick="switchTab('panel')"><span class="icon"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span> Ver panel</button>
+          <button class="btn btn-danger btn-sm" style="flex:1" onclick="endSessionManual()"><span class="icon"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></span> Cerrar sesión</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB PANEL -->
+    <div id="tab-panel" style="display:none">
+      <div id="panel-no-session" style="display:none">
+        <div class="card">
+          <div class="closed">
+            <div class="ico" style="color:var(--muted)"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></div>
+            <h2>Sin sesión activa</h2>
+            <p>Crea una sesión desde la pestaña "Crear sesión".</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="panel-content" style="display:none">
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:20px;">
+            <div>
+              <h2 id="panel-course" style="margin-bottom:4px; font-size:20px;">—</h2>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:12px; color:var(--muted);">Código:</span>
+                <span id="panel-code" style="font-family:'DM Mono',monospace; font-size:18px; font-weight:500; letter-spacing:.18em; color:var(--accent);">—</span>
+              </div>
+            </div>
+            <div class="countdown-wrap" style="margin:0;">
+              <p class="countdown-label">Tiempo restante</p>
+              <div class="countdown-val" id="panel-countdown">--:--</div>
+            </div>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-header">
+              <span class="lbl">Cupos registrados</span>
+              <span class="cnt" id="panel-count">0/0</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="panel-fill" style="width:0%"></div>
+            </div>
+            <div class="progress-pct" id="panel-pct">0%</div>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-val" id="stat-present">0</div><div class="stat-lbl">Presentes</div></div>
+          <div class="stat-card"><div class="stat-val" id="stat-max">0</div><div class="stat-lbl">Máximo</div></div>
+          <div class="stat-card"><div class="stat-val" id="stat-free">0</div><div class="stat-lbl">Libres</div></div>
+        </div>
+
+        <div class="card">
+          <h3>Alumnos registrados</h3>
+          <div class="empty" id="panel-empty-list"><div class="ico" style="color:var(--muted)"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><p>Aún no hay alumnos registrados.</p></div>
+          <ul class="student-list" id="panel-list"></ul>
+        </div>
+
+        <button class="btn btn-danger" onclick="endSessionManual()"><span class="icon"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></span> Cerrar sesión manualmente</button>
+      </div>
+    </div>
+
+    <!-- TAB REPORTE -->
+    <div id="tab-report" style="display:none">
+      <div id="report-empty" style="display:none">
+        <div class="card">
+          <div class="closed">
+            <div class="ico" style="color:var(--muted)"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+            <h2>Sin reporte aún</h2>
+            <p>Finaliza una sesión para ver el reporte aquí.</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="report-content" style="display:none">
+        <div class="card">
+          <div style="text-align:center; padding-bottom:20px; border-bottom:1px solid var(--border); margin-bottom:24px;">
+            <div class="ico" style="color:var(--success); margin-bottom:10px; display:flex; justify-content:center;"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M5.8 11.3 2 22l10.7-3.79"/><path d="M4 3h.01M22 8h.01M15 2h.01M22 20h.01"/><path d="m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10"/><path d="m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11C19.1 14.7 18.48 15.22 17.77 15.22H17"/><path d="m11 2 .33.82c.34.86-.2 1.82-1.11 1.98C9.52 4.9 9 5.52 9 6.23V7"/><path d="M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2z"/></svg></div>
+            <h2 id="report-course" style="font-size:22px; margin-bottom:6px;">—</h2>
+            <p id="report-date" style="color:var(--muted); font-size:14px;">—</p>
+          </div>
+          <div class="report-meta">
+            <div class="meta-item"><div class="meta-key">Total presentes</div><div class="meta-val" id="report-present">—</div></div>
+            <div class="meta-item"><div class="meta-key">Cupo máximo</div><div class="meta-val" id="report-max">—</div></div>
+            <div class="meta-item"><div class="meta-key">Porcentaje</div><div class="meta-val" id="report-pct">—</div></div>
+            <div class="meta-item"><div class="meta-key">Duración</div><div class="meta-val" id="report-dur">—</div></div>
+          </div>
+          <div class="divider"></div>
+          <h3>Alumnos presentes</h3>
+          <ul class="student-list" id="report-list" style="max-height:240px; margin-bottom:24px;"></ul>
+          <div class="btn-row">
+            <button class="btn btn-success" onclick="downloadCSV()"><span class="icon"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span> Descargar CSV</button>
+            <button class="btn btn-primary" onclick="newSession()"><span class="icon"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></span> Nueva sesión</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /screen-teacher -->
+</div><!-- /app -->
+
+<!-- PIN MODAL -->
+<div class="pin-overlay" id="pin-overlay">
+  <div class="pin-modal">
+    <div class="pin-icon" style="color:var(--gold)"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></div>
+    <h2>Acceso Profesor</h2>
+    <p>Ingresa el PIN de 4 dígitos para continuar</p>
+    <div class="pin-dots">
+      <div class="pin-dot" id="dot-0"></div>
+      <div class="pin-dot" id="dot-1"></div>
+      <div class="pin-dot" id="dot-2"></div>
+      <div class="pin-dot" id="dot-3"></div>
+    </div>
+    <div class="pin-error" id="pin-error"></div>
+    <div class="pin-keypad">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key del" onclick="pinDel()">⌫</button>
+      <button class="pin-key zero" onclick="pinKey('0')">0</button>
+      <div></div>
+    </div>
+    <button class="pin-cancel" onclick="closePinModal()">Cancelar</button>
+  </div>
+</div>
+
+<script type="module">
+/* ══ FIREBASE ══ */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot, arrayUnion } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD4g8iMDyzPIU3p9Frgz7Y9JUW5ab6jpbg",
+  authDomain: "inclass-808f1.firebaseapp.com",
+  projectId: "inclass-808f1",
+  storageBucket: "inclass-808f1.firebasestorage.app",
+  messagingSenderId: "576487313562",
+  appId: "1:576487313562:web:1e9e289e7eaa82a03e4f23",
+  measurementId: "G-690MKEHV1E"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+const SESSION_DOC = () => doc(db, 'inclass', 'session');
+const REPORT_DOC  = () => doc(db, 'inclass', 'report');
+
+/* ══ CONFIG ══ */
+const TEACHER_PIN = '1234'; // ← Cambia este PIN antes de subir a GitHub
+
+/* ══ STATE ══ */
+let pinBuffer      = '';
+let countdownTimer = null;
+let unsubscribePanel = null;
+let cachedSession  = null;
+
+/* ══ FIREBASE HELPERS ══ */
+async function getSession() {
+  try {
+    const snap = await getDoc(SESSION_DOC());
+    return snap.exists() ? snap.data() : null;
+  } catch { return null; }
+}
+
+async function saveSession(data) {
+  await setDoc(SESSION_DOC(), data);
+  cachedSession = data;
+}
+
+async function clearSession() {
+  await deleteDoc(SESSION_DOC());
+  cachedSession = null;
+}
+
+async function getReport() {
+  try {
+    const snap = await getDoc(REPORT_DOC());
+    return snap.exists() ? snap.data() : null;
+  } catch { return null; }
+}
+
+async function saveReport(data) {
+  await setDoc(REPORT_DOC(), data);
+}
+
+const generateCode = () => String(Math.floor(100000 + Math.random() * 900000));
+const timeLeft  = s => (s.startTs + s.durationMs) - Date.now();
+const isExpired = s => timeLeft(s) <= 0;
+const isFull    = s => s.students.length >= s.maxStudents;
+
+function fmt(ms) {
+  if (ms <= 0) return '00:00';
+  const t = Math.ceil(ms / 1000);
+  return `${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`;
+}
+
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function fmtDate(str) {
+  if (!str) return '—';
+  const [y,m,d] = str.split('-');
+  const months = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  return `${parseInt(d)} de ${months[parseInt(m)-1]} de ${y}`;
+}
+
+function nowTime() {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+const CHECK_SVG = `<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><polyline points="20 6 9 17 4 12"/></svg>`;
+const X_SVG    = `<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+const WARN_SVG = `<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
+const CHECK_SM = `<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px"><polyline points="20 6 9 17 4 12"/></svg>`;
+const USER_SVG = `<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+const INBOX_SVG= `<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>`;
+const CLOCK_SVG= `<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
+const USERS_SVG= `<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`;
+
+function showAlert(id, type, msg) {
+  const el = $(id), icons = {success: CHECK_SVG, error: X_SVG, warning: WARN_SVG};
+  el.className = `alert alert-${type} show`;
+  el.innerHTML = `<span>${icons[type]||''}</span><span>${msg}</span>`;
+}
+function hideAlert(id) { $(id).className = 'alert'; }
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+const $ = id => document.getElementById(id);
+
+function setLoading(btnId, loading) {
+  const btn = $(btnId);
+  if (!btn) return;
+  btn.disabled = loading;
+  btn.style.opacity = loading ? '.6' : '1';
+}
+
+/* ══ NAVIGATION ══ */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(id).classList.add('active');
+}
+
+function goHome() { stopTimers(); showScreen('screen-role'); }
+function enterAsStudent() { showScreen('screen-student'); refreshStudentView(); }
+function enterAsTeacher() { showScreen('screen-teacher'); switchTab('create'); }
+
+function switchTab(name) {
+  ['create','panel','report'].forEach(t => {
+    $(`tab-${t}`).style.display = 'none';
+    $(`nav-${t}`).classList.remove('active');
+  });
+  $(`tab-${name}`).style.display = 'block';
+  $(`nav-${name}`).classList.add('active');
+  if (name === 'create') refreshTeacherTab();
+  if (name === 'panel')  refreshPanelTab();
+  if (name === 'report') refreshReportTab();
+}
+
+/* ══ PIN ══ */
+function openPinModal() {
+  pinBuffer = ''; updatePinDots();
+  $('pin-error').textContent = '';
+  $('pin-overlay').classList.add('show');
+}
+function closePinModal() {
+  $('pin-overlay').classList.remove('show');
+  pinBuffer = ''; updatePinDots();
+}
+function updatePinDots() {
+  for (let i = 0; i < 4; i++) $(`dot-${i}`).classList.toggle('filled', i < pinBuffer.length);
+}
+function pinKey(d) {
+  if (pinBuffer.length >= 4) return;
+  pinBuffer += d; updatePinDots();
+  $('pin-error').textContent = '';
+  if (pinBuffer.length === 4) checkPin();
+}
+function pinDel() { pinBuffer = pinBuffer.slice(0,-1); updatePinDots(); $('pin-error').textContent = ''; }
+function checkPin() {
+  if (pinBuffer === TEACHER_PIN) { closePinModal(); enterAsTeacher(); }
+  else {
+    const el = $('pin-error');
+    el.textContent = 'PIN incorrecto. Intenta de nuevo.';
+    el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake');
+    pinBuffer = '';
+    setTimeout(updatePinDots, 300);
+  }
+}
+
+/* ══ ALUMNO ══ */
+async function refreshStudentView() {
+  $('student-success').style.display = 'none';
+  $('student-blocked').style.display = 'none';
+  $('student-form').style.display = 'none';
+  hideAlert('student-alert');
+  const sess = await getSession();
+  if (!sess) {
+    $('student-blocked').style.display = 'block';
+    $('blocked-icon').innerHTML = INBOX_SVG;
+    $('blocked-title').textContent = 'Sin sesión activa';
+    $('blocked-desc').textContent = 'Espera a que el profesor inicie una sesión.'; return;
+  }
+  if (isExpired(sess)) {
+    $('student-blocked').style.display = 'block';
+    $('blocked-icon').innerHTML = CLOCK_SVG;
+    $('blocked-title').textContent = 'Tiempo expirado';
+    $('blocked-desc').textContent = 'El período de registro ya cerró.'; return;
+  }
+  if (isFull(sess)) {
+    $('student-blocked').style.display = 'block';
+    $('blocked-icon').innerHTML = USERS_SVG;
+    $('blocked-title').textContent = 'Cupo lleno';
+    $('blocked-desc').textContent = `Se alcanzó el límite de ${sess.maxStudents} alumnos.`; return;
+  }
+  $('student-form').style.display = 'block';
+}
+
+async function markAttendance() {
+  const code   = $('s-code').value.trim();
+  const carnet = $('s-carnet').value.trim();
+  if (!code || code.length !== 6) { showAlert('student-alert','error','Ingresa un código de 6 dígitos.'); return; }
+  if (!carnet)                     { showAlert('student-alert','error','Ingresa tu Código SIS.'); return; }
+  setLoading('btn-register', true);
+  const sess = await getSession();
+  if (!sess)              { setLoading('btn-register',false); showAlert('student-alert','error','No hay sesión activa.'); return; }
+  if (sess.code !== code) { setLoading('btn-register',false); showAlert('student-alert','error','Código incorrecto.'); return; }
+  if (isExpired(sess))    { setLoading('btn-register',false); showAlert('student-alert','warning','El tiempo de registro expiró.'); return; }
+  if (isFull(sess))       { setLoading('btn-register',false); showAlert('student-alert','warning','El cupo está lleno.'); return; }
+  const students = sess.students || [];
+  if (students.some(s => s.carnet.toLowerCase() === carnet.toLowerCase())) {
+    setLoading('btn-register',false); showAlert('student-alert','warning','Este Código SIS ya fue registrado.'); return;
+  }
+  try {
+    await updateDoc(SESSION_DOC(), { students: arrayUnion({ carnet, time: nowTime(), ts: Date.now() }) });
+    $('student-form').style.display = 'none';
+    $('success-carnet').textContent = `Código SIS: ${carnet}`;
+    $('student-success').style.display = 'block';
+    $('s-code').value = ''; $('s-carnet').value = '';
+  } catch(e) {
+    showAlert('student-alert','error','Error al registrar. Intenta de nuevo.');
+  } finally {
+    setLoading('btn-register', false);
+  }
+}
+
+function resetStudentForm() {
+  $('student-success').style.display = 'none';
+  $('student-form').style.display = 'block';
+  hideAlert('student-alert'); refreshStudentView();
+}
+
+/* ══ CREAR SESIÓN ══ */
+async function refreshTeacherTab() {
+  const sess = await getSession();
+  if (sess && !isExpired(sess)) {
+    $('create-form-section').style.display = 'none';
+    $('create-code-section').style.display = 'block';
+    $('teacher-code').textContent   = sess.code;
+    $('teacher-course').textContent = sess.course;
+    startCountdown();
+  } else {
+    $('create-form-section').style.display = 'block';
+    $('create-code-section').style.display = 'none';
+    stopCountdown();
+  }
+}
+
+async function createSession() {
+  const course = $('t-course').value.trim();
+  const date   = $('t-date').value;
+  const max    = parseInt($('t-max').value);
+  const mins   = parseInt($('t-time').value);
+  if (!course)           { showAlert('teacher-alert','error','Ingresa el nombre del curso.'); return; }
+  if (!date)             { showAlert('teacher-alert','error','Selecciona la fecha.'); return; }
+  if (!max  || max < 1)  { showAlert('teacher-alert','error','Ingresa una capacidad máxima válida.'); return; }
+  if (!mins || mins < 1) { showAlert('teacher-alert','error','Ingresa un tiempo límite válido.'); return; }
+  hideAlert('teacher-alert');
+  setLoading('btn-create', true);
+  try {
+    await saveSession({ code: generateCode(), course, date, maxStudents: max, durationMs: mins*60000, startTs: Date.now(), students: [] });
+    refreshTeacherTab();
+  } catch(e) {
+    showAlert('teacher-alert','error','Error al crear sesión. Intenta de nuevo.');
+  } finally {
+    setLoading('btn-create', false);
+  }
+}
+
+/* ══ COUNTDOWN ══ */
+function startCountdown() {
+  stopCountdown(); tickCountdown();
+  countdownTimer = setInterval(tickCountdown, 500);
+}
+function stopCountdown() { if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; } }
+async function tickCountdown() {
+  const sess = cachedSession || await getSession();
+  if (!sess || isExpired(sess)) {
+    stopCountdown();
+    const teacherActive = $('screen-teacher').classList.contains('active');
+    if (sess && isExpired(sess) && teacherActive) await finalize(sess);
+    if (teacherActive) refreshTeacherTab();
+    return;
+  }
+  cachedSession = sess;
+  const rem = timeLeft(sess), el = $('teacher-countdown');
+  if (el) { el.textContent = fmt(rem); el.className = 'countdown-val' + (rem < 60000 ? ' urgent' : ''); }
+}
+
+/* ══ PANEL (tiempo real con onSnapshot) ══ */
+async function refreshPanelTab() {
+  if (unsubscribePanel) { unsubscribePanel(); unsubscribePanel = null; }
+  const sess = await getSession();
+  if (!sess || isExpired(sess)) {
+    $('panel-no-session').style.display = 'block'; $('panel-content').style.display = 'none';
+    if (sess && isExpired(sess)) { await finalize(sess); refreshReportTab(); }
+    return;
+  }
+  $('panel-no-session').style.display = 'none'; $('panel-content').style.display = 'block';
+  updatePanel(sess);
+  unsubscribePanel = onSnapshot(SESSION_DOC(), snap => {
+    if (!snap.exists()) {
+      $('panel-no-session').style.display = 'block'; $('panel-content').style.display = 'none'; return;
+    }
+    const data = snap.data();
+    cachedSession = data;
+    updatePanel(data);
+  });
+}
+
+function updatePanel(sess) {
+  if (!sess) return;
+  $('panel-course').textContent = sess.course;
+  $('panel-code').textContent   = sess.code;
+  const rem = timeLeft(sess), pc = $('panel-countdown');
+  pc.textContent = fmt(rem); pc.className = 'countdown-val' + (rem < 60000 ? ' urgent' : '');
+  const students = sess.students || [];
+  const n = students.length, max = sess.maxStudents;
+  const pct = max > 0 ? Math.min(100, Math.round(n/max*100)) : 0;
+  $('panel-count').textContent  = `${n}/${max}`;
+  $('panel-pct').textContent    = `${pct}%`;
+  $('stat-present').textContent = n;
+  $('stat-max').textContent     = max;
+  $('stat-free').textContent    = Math.max(0, max - n);
+  const fill = $('panel-fill');
+  fill.style.width = `${pct}%`; fill.classList.toggle('full', pct >= 100);
+  const list = $('panel-list'), empty = $('panel-empty-list');
+  if (n === 0) { empty.style.display = 'block'; list.innerHTML = ''; }
+  else {
+    empty.style.display = 'none';
+    list.innerHTML = students.map((s,i) =>
+      `<li class="student-item"><span class="s-num">${i+1}</span><span class="s-carnet">${escHtml(s.carnet)}</span><span class="s-badge">${CHECK_SM}</span></li>`
+    ).join('');
+  }
+}
+
+function stopTimers() {
+  stopCountdown();
+  if (unsubscribePanel) { unsubscribePanel(); unsubscribePanel = null; }
+}
+
+/* ══ END SESSION ══ */
+async function endSessionManual() {
+  if (!confirm('¿Seguro que deseas cerrar la sesión ahora?')) return;
+  const sess = await getSession(); if (!sess) return;
+  await finalize(sess);
+  refreshTeacherTab();
+  switchTab('report');
+}
+
+async function finalize(sess) {
+  await saveReport({
+    course: sess.course, date: sess.date, code: sess.code,
+    maxStudents: sess.maxStudents, students: sess.students || [],
+    durationMinutes: Math.round((Date.now() - sess.startTs) / 60000), endTs: Date.now()
+  });
+  await clearSession();
+  stopTimers();
+  cachedSession = null;
+}
+
+/* ══ REPORTE ══ */
+async function refreshReportTab() {
+  const rep = await getReport();
+  if (!rep) { $('report-empty').style.display = 'block'; $('report-content').style.display = 'none'; return; }
+  $('report-empty').style.display = 'none'; $('report-content').style.display = 'block';
+  const students = rep.students || [];
+  const n = students.length, pct = rep.maxStudents > 0 ? Math.round(n/rep.maxStudents*100) : 0;
+  $('report-course').textContent  = rep.course;
+  $('report-date').textContent    = fmtDate(rep.date);
+  $('report-present').textContent = n;
+  $('report-max').textContent     = rep.maxStudents;
+  $('report-pct').textContent     = `${pct}%`;
+  $('report-dur').textContent     = rep.durationMinutes < 1 ? '< 1 min' : rep.durationMinutes === 1 ? '1 minuto' : `${rep.durationMinutes} minutos`;
+  const list = $('report-list');
+  list.innerHTML = n === 0
+    ? `<div class="empty"><div class="ico" style="color:var(--muted)">${USER_SVG}</div><p>Ningún alumno registrado.</p></div>`
+    : students.map((s,i) =>
+        `<li class="student-item"><span class="s-num">${i+1}</span><span class="s-carnet">${escHtml(s.carnet)}</span><span class="s-badge">${CHECK_SM}</span></li>`
+      ).join('');
+}
+
+/* ══ CSV ══ */
+async function downloadCSV() {
+  const rep = await getReport(); if (!rep) return;
+  const students = rep.students || [];
+  const rows = [['Código SIS','Fecha de sesión'], ...students.map(s => [s.carnet, rep.date])];
+  const csv  = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `asistencia_${rep.course.replace(/\s+/g,'_')}_${rep.date}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+/* ══ NUEVA SESIÓN ══ */
+function newSession() {
+  $('t-course').value = ''; $('t-date').value = todayStr();
+  $('t-max').value = ''; $('t-time').value = '';
+  hideAlert('teacher-alert'); switchTab('create');
+}
+
+/* ══ EXPONER FUNCIONES GLOBALMENTE ══ */
+window.openPinModal     = openPinModal;
+window.closePinModal    = closePinModal;
+window.pinKey           = pinKey;
+window.pinDel           = pinDel;
+window.enterAsStudent   = enterAsStudent;
+window.goHome           = goHome;
+window.switchTab        = switchTab;
+window.markAttendance   = markAttendance;
+window.resetStudentForm = resetStudentForm;
+window.createSession    = createSession;
+window.endSessionManual = endSessionManual;
+window.downloadCSV      = downloadCSV;
+window.newSession       = newSession;
+
+/* ══ INIT ══ */
+document.addEventListener('DOMContentLoaded', () => {
+  $('t-date').value = todayStr();
+  document.querySelector('[onclick="createSession()"]')?.setAttribute('id','btn-create');
+  document.querySelector('[onclick="markAttendance()"]')?.setAttribute('id','btn-register');
+});
+</script>
+</body>
+</html>
